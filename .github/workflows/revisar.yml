@@ -18,7 +18,9 @@ jobs:
           python-version: '3.11'
 
       - name: Instalar librerías
-        run: pip install feedparser requests
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests ntscraper
 
       - name: Ejecutar monitor
         env:
