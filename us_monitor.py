@@ -11,7 +11,7 @@ STATE_FILE = "last_seen_us.json"
 
 # ================= 50 CUENTAS POLÍTICAS Y MEDIÁTICAS =================
 HANDLES = [
-    "BasedMikeLee", "TrumpWarRoom", "EricLDaugh", "MAGAVoice", "GuntherEagleman",
+    "GreciMM18", "BasedMikeLee", "TrumpWarRoom", "EricLDaugh", "MAGAVoice", "GuntherEagleman",
     "TheSCIF", "RapidResponse47", "bennyjohnson", "nicksortor", "JackPosobiec",
     "Real_RobN", "LauraLoomer", "NathanielSami", "LindseyGrahamSC", "elonmusk",
     "johnnymaga", "mcucolo57", "Interior", "libsoftiktok", "BPUnion",
