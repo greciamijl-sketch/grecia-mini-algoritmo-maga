@@ -2,16 +2,17 @@ import json
 import os
 import re
 import html
-import feedparser
 import requests
+from ntscraper import Nitter
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 STATE_FILE = "last_seen_us.json"
 
-# ================= 50 CUENTAS POLÍTICAS Y MEDIÁTICAS =================
+# ================= LISTA DE CUENTAS MONITOREADAS =================
 HANDLES = [
-    "GreciMM18", "BasedMikeLee", "TrumpWarRoom", "EricLDaugh", "MAGAVoice", "GuntherEagleman",
+    "GreciMM18",  # Cuenta para pruebas directas
+    "BasedMikeLee", "TrumpWarRoom", "EricLDaugh", "MAGAVoice", "GuntherEagleman",
     "TheSCIF", "RapidResponse47", "bennyjohnson", "nicksortor", "JackPosobiec",
     "Real_RobN", "LauraLoomer", "NathanielSami", "LindseyGrahamSC", "elonmusk",
     "johnnymaga", "mcucolo57", "Interior", "libsoftiktok", "BPUnion",
@@ -23,15 +24,7 @@ HANDLES = [
     "FoxNews", "GreereMedeea", "FreedomCaucusF", "IngrahamAngle", "IHF_Heritage"
 ]
 
-SOURCES = [
-    {
-        "handle": f"@{h}",
-        "url": f"https://nitter.privacydev.net/{h}/rss"
-    }
-    for h in HANDLES
-]
-
-# ================= FILTRO ESPECÍFICO =================
+# ================= FILTRO ESTRICTO =================
 KEYWORDS_REGEX = re.compile(
     r"\b("
     r"m[eé]xic\w*|mexican\w*|"
@@ -61,13 +54,12 @@ def clean_html(raw_html):
 
 def send_telegram(handle, text, link):
     safe_text = html.escape(text)
-    message = f"""🦅 <b>[GreciaMiniAlgoritmoMAGA]</b>
-👤 <b>Cuenta:</b> {handle}
-
-{safe_text}
-
-🔗 <a href="{link}">Ver publicación original</a>"""
-
+    message = (
+        f"🦅 <b>[GreciaMiniAlgoritmoMAGA]</b>\n"
+        f"👤 <b>Cuenta:</b> @{handle}\n\n"
+        f"{safe_text}\n\n"
+        f"🔗 <a href='{link}'>Ver publicación</a>"
+    )
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
         "chat_id": TELEGRAM_CHAT_ID,
@@ -78,50 +70,49 @@ def send_telegram(handle, text, link):
     try:
         requests.post(url, json=payload, timeout=10)
     except Exception as e:
-        print(f"Error al enviar a Telegram: {e}")
+        print(f"Error al enviar mensaje: {e}")
 
 def main():
     state = load_state()
     is_initial_run = (len(state) == 0)
 
-    for source in SOURCES:
-        handle = source["handle"]
-        url = source["url"]
-        last_id = state.get(handle)
+    scraper = Nitter(log_level=0)
+
+    for handle in HANDLES:
+        last_link = state.get(handle)
 
         try:
-            feed = feedparser.parse(url, request_headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
-        except Exception:
+            tweets_data = scraper.get_tweets(handle, mode="user", number=5)
+            tweets = tweets_data.get("tweets", [])
+        except Exception as e:
+            print(f"Error al consultar @{handle}: {e}")
             continue
 
-        if not feed.entries:
+        if not tweets:
             continue
 
-        if is_initial_run or last_id is None:
-            state[handle] = feed.entries[0].get("id", feed.entries[0].link)
+        if is_initial_run or last_link is None:
+            state[handle] = tweets[0]["link"]
             continue
 
-        new_entries = []
-        for entry in feed.entries:
-            entry_id = entry.get("id", entry.link)
-            if entry_id == last_id:
+        new_tweets = []
+        for t in tweets:
+            t_link = t["link"]
+            if t_link == last_link:
                 break
-            new_entries.append(entry)
+            new_tweets.append(t)
 
-        for entry in reversed(new_entries):
-            raw_title = entry.get("title", "")
-            raw_summary = entry.get("summary", "")
-            full_text = clean_html(f"{raw_title} {raw_summary}")
+        for t in reversed(new_tweets):
+            full_text = clean_html(t.get("text", ""))
 
             if KEYWORDS_REGEX.search(full_text):
                 preview = full_text[:400] + ("..." if len(full_text) > 400 else "")
-                send_telegram(handle, preview, entry.link)
+                send_telegram(handle, preview, t["link"])
 
-        if new_entries:
-            state[handle] = new_entries[0].get("id", new_entries[0].link)
+        if new_tweets:
+            state[handle] = new_tweets[0]["link"]
 
     save_state(state)
 
 if __name__ == "__main__":
-    send_telegram("@MiCuenta", "🚨 PRUEBA DE CONEXIÓN: México, Sheinbaum y USMCA funcionando correctamente.", "https://x.com")
     main()
