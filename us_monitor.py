@@ -123,4 +123,5 @@ def main():
     save_state(state)
 
 if __name__ == "__main__":
+    send_telegram("@MiCuenta", "🚨 PRUEBA DE CONEXIÓN: México, Sheinbaum y USMCA funcionando correctamente.", "https://x.com")
     main()
