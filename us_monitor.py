@@ -102,42 +102,6 @@ def clean_html(raw_html):
     return " ".join(clean.split())
 
 
-def send_intro_message():
-    message = (
-        "🦅 <b>[GreciaMini - Algoritmo MAGA | Bot 1]</b>\n\n"
-        "Canal configurado para el monitoreo automatizado de las <b>+200 cuentas de X</b> "
-        "que el presidente Donald Trump ha compartido alguna vez en Truth Social "
-        "(registradas sistemáticamente por su creadora, Grecia, desde marzo de 2026).\n\n"
-        "🚨 <b>Objetivo de alerta temprana:</b>\n"
-        "Avisar de inmediato si alguna de estas cuentas publica sobre:\n"
-        "• México\n"
-        "• Cárteles\n"
-        "• La presidenta de México (Claudia Sheinbaum con arroba o nombre)\n"
-        "• El USMCA / T-MEC\n"
-        "• Aranceles (tariffs)\n\n"
-        "🤖 <b>Estado del despliegue:</b>\n"
-        "Soy el <b>primer bot</b> asignado a este canal. Mi trabajo es monitorear a las "
-        "<b>Top 50 cuentas</b> que con mayor frecuencia ha compartido el presidente. "
-        "Próximamente, la creadora perfeccionará la infraestructura e integrará al resto "
-        "de bots para cubrir la totalidad del directorio."
-    )
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": TELEGRAM_CHAT_ID,
-        "text": message,
-        "parse_mode": "HTML",
-        "disable_web_page_preview": True
-    }
-    try:
-        r = requests.post(url, json=payload, timeout=10)
-        if r.ok:
-            print("📢 Tarjeta de introducción enviada con éxito al canal MAGA.", flush=True)
-        else:
-            print(f"❌ Error al enviar intro a Telegram ({r.status_code}): {r.text}", flush=True)
-    except Exception as e:
-        print(f"Error al enviar mensaje intro: {e}", flush=True)
-
-
 def send_telegram(category, author, text, link):
     safe_text = html.escape(text)
     message = (
@@ -231,10 +195,6 @@ def scrape_tweets(page, handle):
 def main():
     state = load_state()
     is_initial_run = (len(state) == 0)
-
-    if not state.get("__intro_sent__"):
-        send_intro_message()
-        state["__intro_sent__"] = True
 
     print(f"=== INICIANDO MONITOREO MAGA: {len(X_SOURCES)} FUENTES ===", flush=True)
 
