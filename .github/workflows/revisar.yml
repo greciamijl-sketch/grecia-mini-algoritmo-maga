@@ -2,7 +2,7 @@ name: GreciaMiniAlgoritmoMAGA
 
 on:
   schedule:
-    # Corre al minuto 0 cada 5 horas (00:00, 05:00, 10:00, 15:00, 20:00 UTC)
+    # Corre al minuto 0 cada 5 horas
     - cron: '0 */5 * * *'
   workflow_dispatch:
 
@@ -32,7 +32,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           X_AUTH_TOKEN: ${{ secrets.X_AUTH_TOKEN }}
           X_CT0: ${{ secrets.X_CT0 }}
-        run: python bot_monitor.py
+        run: python us_monitor.py
 
       - name: Guardar estado
         run: |
